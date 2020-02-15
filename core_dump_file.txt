@@ -1,0 +1,51 @@
+*** why it very useful ? 
+When a program crash, developer take time to identify which line of code cause crash program.
+
+Requirement system
+    - device and host machine connect to the same wireless modem.
+
+    - host machine  need to install NFS server .
+
+    - Enable NFS client in linux Kernel of device.
+
+    - Cross compile gdb 7.3.1 for all platform (can adjust)
+
+Step-by-step guide
+1. Setup NFS for mounting device to host machine
+
+    a) Setup NFS Server on host machine
+
+        - Install NFS server: “sudo apt-get install -y nfs-kernel-server”
+
+        - Create share folder: “sudo mkdir ~/share_nfs;chmod 777 ~/share_nfs/”
+
+        - adjust content of following file: “sudo vi /etc/exports” add text “/nfsshare 192.168.ip.1/24(rw,sync,no_subtree_check)” to exports file, save and close.
+
+        - Restart NFS Server: “sudo /etc/init.d/nfs-kernel-server restart”
+
+        - Check folder share exist: “sudo exportfs”
+
+    b) Setup NFS Client on device
+
+        - Re-build kernel with option NFS Client was enabled.
+
+2. Execute mounting share forder from device to host machine
+
+    a) Copy gdb program to share folder on Server ( cross compile to create gdb app which can run on device).
+
+    b) from device jsut type command “mkdir ~/share_nfs;mount -o nolock <IP address of Server>:~/share_nfs ~/share_nfs”.
+
+3. Debugging a program that produces a core dump file.
+
+    a) Compile the program using option -g flag and do not use arm-linux-strip after finish compile
+    
+    *** ON TREMINAL OF DEVICE
+    b) Run command “ulimit -c unlimited” (limit core dump size).
+
+    c) Run command “mkdir /tmp/cores;echo "/tmp/cores/core.%e.%p.%h.%t" > /proc/sys/kernel/core_pattern” --> add location of core dump file
+
+    d) Execute the program.
+
+    e) When crash program, just type command “~/share_nfs/gdb <name program> /tmp/cores/<name of core dump file>”.
+
+    f) Press “bt” to show line of code cause crash program
